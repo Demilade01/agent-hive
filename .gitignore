@@ -1,0 +1,86 @@
+# Dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Production/Build outputs
+dist/
+build/
+out/
+.next/
+.nuxt/
+coverage/
+*.tsbuildinfo
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+.env.production.local
+.env.development.local
+.env.test.local
+
+# IDE & Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+.AppleDouble
+.LSOverride
+*.sublime-project
+*.sublime-workspace
+.prettierignore
+.prettierrc.js
+.editorconfig
+
+# OS files
+Thumbs.db
+.Thumbs.db
+.DS_Store
+
+# Testing
+coverage/
+.nyc_output/
+junit.xml
+
+# Hardhat specific
+artifacts/
+cache/
+typechain/
+typechain-types/
+
+# Hardhat ignition
+ignition/deployments/
+
+# Next.js specific
+.turbo/
+.vercel/
+
+# NestJS specific
+dist/
+node_modules/
+
+# Logging
+logs/
+*.log
+
+# Temp files
+*.tmp
+*.bak
+tmp/
+temp/
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Misc
+.cache/
+*.zip
+*.rar
