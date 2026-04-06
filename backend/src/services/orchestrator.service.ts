@@ -72,6 +72,9 @@ export class OrchestratorService {
 
     this.logger.log(`Job ${job.id} created with 3 subtasks`);
 
+    // Emit event to trigger automatic execution (non-blocking)
+    this.eventEmitter.emit('job.submitted', { jobId: job.id });
+
     return {
       jobId: job.id,
       status: JobStatus.PENDING,
