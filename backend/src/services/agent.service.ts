@@ -1,11 +1,12 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { OnEvent } from '@nestjs/event-emitter';
 import { Task, TaskStatus } from '../entities/task.entity';
 import { Agent, AgentType } from '../entities/agent.entity';
+import { Job, JobStatus } from '../entities/job.entity';
 import { GroqService } from '../config/groq.service';
 import { BlockchainService } from '../config/blockchain.service';
-import { PaymentService } from './payment.service';
 import { MCPToolService } from './mcp-tool.service';
 
 @Injectable()
@@ -17,13 +18,17 @@ export class AgentService {
     private taskRepository: Repository<Task>,
     @InjectRepository(Agent)
     private agentRepository: Repository<Agent>,
+    @InjectRepository(Job)
+    private jobRepository: Repository<Job>,
     private groqService: GroqService,
     private blockchainService: BlockchainService,
-    private paymentService: PaymentService,
     private mcpToolService: MCPToolService,
   ) {}
 
-  async executeAgentLoop(task: Task): Promise<{
+  async executeAgentLoop(
+    task: Task,
+    previousResult?: string,
+  ): Promise<{
     taskId: string;
     result: string;
     paymentHash: string;
@@ -46,8 +51,8 @@ export class AgentService {
 
     for (let iteration = 0; iteration < maxIterations; iteration++) {
       try {
-        // PERCEIVE: Get task context
-        const prompt = this.buildPrompt(task, agent);
+        // PERCEIVE: Get task context with previous results
+        const prompt = this.buildPrompt(task, agent, previousResult);
 
         // DECIDE: Call Groq
         this.logger.debug(`Groq API call - iteration ${iteration + 1}`);
@@ -195,14 +200,22 @@ export class AgentService {
     });
   }
 
-  private buildPrompt(task: Task, agent: Agent): string {
-    return `You are a ${agent.agentType} specialist agent in the AgentHive system.
+  private buildPrompt(
+    task: Task,
+    agent: Agent,
+    previousResult?: string,
+  ): string {
+    let context = `You are a ${agent.agentType} specialist agent in the AgentHive system.
 
 Task Type: ${task.taskType}
 Task ID: ${task.id}
-Instruction: ${task.instruction}
+Instruction: ${task.instruction}`;
 
-Please execute this task and provide a clear, concise result.
+    if (previousResult) {
+      context += `\n\nPrevious Task Result (use this as context):\n${previousResult}`;
+    }
+
+    context += `\n\nPlease execute this task and provide a clear, concise result.
 Respond with JSON in this format:
 {
   "action": "complete",
@@ -214,6 +227,8 @@ If you cannot complete the task, respond with:
   "action": "error",
   "content": "reason here"
 }`;
+
+    return context;
   }
 
   private parseGroqResponse(response: string): {

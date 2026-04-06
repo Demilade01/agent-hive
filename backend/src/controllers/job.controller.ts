@@ -256,6 +256,77 @@ export class JobController {
     }
   }
 
+  @Post('test/execute-job/:jobId')
+  @ApiOperation({
+    summary: 'Test endpoint - Execute job agent loop',
+    description: 'Manually trigger agent execution loop for a job and its tasks',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Job execution triggered successfully',
+  })
+  async executeJobTest(@Param('jobId') jobId: string) {
+    try {
+      // Get the job and its tasks
+      const job = await this.orchestratorService.getJobStatus(jobId);
+      if (!job) {
+        throw new Error(`Job ${jobId} not found`);
+      }
+
+      // Register a test agent if it doesn't exist
+      const testAgentId = `agent-test-${Date.now()}`;
+      const agent = await this.agentService.registerAgent(
+        testAgentId,
+        'image_analyzer' as any,
+      );
+
+      // Get pending tasks sorted by creation order (maintain sequence)
+      const tasks = job.tasks
+        .filter((t: any) => t.status === 'pending')
+        .sort(
+          (a: any, b: any) =>
+            new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+        );
+
+      // Execute agent loop for each task SEQUENTIALLY, passing previous results
+      const results: any[] = [];
+      let previousResult: string | undefined;
+
+      for (const task of tasks) {
+        try {
+          const result = await this.agentService.executeAgentLoop(
+            task,
+            previousResult,
+          );
+          results.push({
+            taskId: task.id,
+            status: 'completed',
+            result,
+          });
+          // Pass this task's result to the next task
+          previousResult = result.result;
+        } catch (error) {
+          results.push({
+            taskId: task.id,
+            status: 'failed',
+            error: error instanceof Error ? error.message : String(error),
+          });
+          // Don't break chain; next task can still work without this one
+        }
+      }
+
+      return { jobId, agentId: agent.id, executions: results };
+    } catch (error) {
+      this.logger.error(
+        `Test execution failed: ${error instanceof Error ? error.message : String(error)}`,
+      );
+      throw new HttpException(
+        'Test execution failed',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
   @Get('health')
   @ApiOperation({
     summary: 'Health check',
