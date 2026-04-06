@@ -19,7 +19,7 @@ export function AgentMarketplace() {
           variants={containerVariants}
           className="mb-16"
         >
-          <motion.h2 variants={itemVariants} className="text-3xl sm:text-4xl font-bold mb-4">
+          <motion.h2 variants={itemVariants} className="text-3xl sm:text-4xl font-bold mb-4 text-white">
             Agent Marketplace
           </motion.h2>
           <motion.p

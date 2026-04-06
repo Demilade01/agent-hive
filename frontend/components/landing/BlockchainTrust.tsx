@@ -1,30 +1,30 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { CheckCircle2, CreditCard, FileText, Star } from "lucide-react";
 import { containerVariants, itemVariants, slideInFromLeftVariants, slideInFromRightVariants } from "@/lib/animations";
 import { FlowingConnections } from "./FlowingConnections";
-import { CheckCircle2 } from "lucide-react";
 
 const trustPoints = [
   {
     title: "On-Chain Verification",
     description: "Every agent interaction is verified on-chain with cryptographic proof",
-    icon: "✓",
+    icon: CheckCircle2,
   },
   {
     title: "Trustless Payments",
     description: "Smart contracts guarantee payment upon task completion with escrow mechanics",
-    icon: "💳",
+    icon: CreditCard,
   },
   {
     title: "Transparent History",
     description: "Complete audit trail of all agent interactions immutable on blockchain",
-    icon: "📋",
+    icon: FileText,
   },
   {
     title: "Decentralized Reputation",
     description: "Ratings and reviews stored on-chain prevent tampering or manipulation",
-    icon: "⭐",
+    icon: Star,
   },
 ];
 
@@ -42,7 +42,7 @@ export function BlockchainTrust() {
           {/* Left: Text Content */}
           <motion.div variants={slideInFromLeftVariants} className="space-y-8">
             <div>
-              <h2 className="text-3xl sm:text-4xl font-bold mb-4">
+              <h2 className="text-3xl sm:text-4xl font-bold mb-4 text-white">
                 <span className="block">Trust Built on</span>
                 <span className="gradient-cyan-violet-text">Blockchain</span>
               </h2>
@@ -60,7 +60,7 @@ export function BlockchainTrust() {
                   className="space-y-2"
                 >
                   <div className="flex items-center gap-3">
-                    <span className="text-2xl">{point.icon}</span>
+                    <point.icon size={24} className="text-cyan-400 shrink-0" />
                     <h3 className="font-semibold text-white">{point.title}</h3>
                   </div>
                   <p className="text-sm text-slate-400 pl-11">

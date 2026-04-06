@@ -6,13 +6,16 @@ import Image from "next/image";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { slideInFromTopVariants } from "@/lib/animations";
+import { Menu, X } from "lucide-react";
 
 export function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 10);
+      setIsMenuOpen(false);
     };
 
     window.addEventListener("scroll", handleScroll);
@@ -49,7 +52,7 @@ export function Navbar() {
               className="w-full h-full"
             />
           </div>
-          <span className="text-xl font-bold hidden sm:block group-hover:text-cyan-400 transition-colors">
+          <span className="text-xl font-bold hidden sm:block text-white group-hover:text-cyan-400 transition-colors">
             AgentHive
           </span>
         </Link>
@@ -67,16 +70,53 @@ export function Navbar() {
           ))}
         </div>
 
-        {/* Right CTA */}
+        {/* Right: CTA and Mobile Menu */}
         <div className="flex items-center gap-4">
           <Button
-            className="bg-linear-to-r from-cyan-500 to-blue-500 hover:from-cyan-400 hover:to-blue-400 glow-cyan text-white font-semibold px-6 py-2 rounded-lg transition-all duration-300"
+            className="hidden sm:flex bg-linear-to-r from-cyan-500 to-blue-500 hover:from-cyan-400 hover:to-blue-400 glow-cyan text-white font-semibold px-6 py-2 rounded-lg transition-all duration-300"
             asChild
           >
             <Link href="#launch">Launch Agent</Link>
           </Button>
+
+          {/* Mobile Menu Button */}
+          <button
+            onClick={() => setIsMenuOpen(!isMenuOpen)}
+            className="sm:hidden p-2 text-cyan-400 hover:text-cyan-300 transition-colors"
+          >
+            {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
+          </button>
         </div>
       </div>
+
+      {/* Mobile Menu */}
+      {isMenuOpen && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -10 }}
+          className="sm:hidden bg-slate-950/95 backdrop-blur-md border-b border-cyan-500/20"
+        >
+          <div className="max-w-7xl mx-auto px-4 py-4 space-y-3">
+            {navLinks.map((link) => (
+              <Link
+                key={link.label}
+                href={link.href}
+                onClick={() => setIsMenuOpen(false)}
+                className="block text-slate-300 hover:text-cyan-400 transition-colors py-2"
+              >
+                {link.label}
+              </Link>
+            ))}
+            <Button
+              className="w-full bg-linear-to-r from-cyan-500 to-blue-500 hover:from-cyan-400 hover:to-blue-400 glow-cyan text-white font-semibold py-2 rounded-lg transition-all duration-300 mt-4"
+              asChild
+            >
+              <Link href="#launch" onClick={() => setIsMenuOpen(false)}>Launch Agent</Link>
+            </Button>
+          </div>
+        </motion.div>
+      )}
     </motion.nav>
   );
 }

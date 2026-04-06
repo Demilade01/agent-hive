@@ -17,7 +17,7 @@ export function LiveNetworkSection() {
         >
           {/* Left: Text Content */}
           <motion.div variants={slideInFromLeftVariants} className="space-y-6">
-            <h2 className="text-3xl sm:text-4xl font-bold">
+            <h2 className="text-3xl sm:text-4xl font-bold text-white">
               <span className="block">Live Agent Network</span>
               <span className="gradient-cyan-violet-text">In Action</span>
             </h2>

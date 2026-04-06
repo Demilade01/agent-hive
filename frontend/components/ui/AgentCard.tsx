@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { Agent } from "@/lib/mockData";
 import { cardHoverVariants } from "@/lib/animations";
 import { Star } from "lucide-react";
+import { renderIcon } from "@/lib/icons";
 
 interface AgentCardProps {
   agent: Agent;
@@ -31,7 +32,9 @@ export function AgentCard({ agent }: AgentCardProps) {
               </h3>
               <p className="text-xs text-slate-500 mt-1">{agent.capability}</p>
             </div>
-            <span className="text-3xl">{agent.icon}</span>
+            <div className="text-cyan-400 group-hover:text-cyan-300 transition-colors">
+              {renderIcon(agent.iconName, 32)}
+            </div>
           </div>
 
           {/* Description */}
