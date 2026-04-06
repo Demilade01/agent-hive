@@ -1,0 +1,259 @@
+import { Injectable, Logger } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { Task, TaskStatus } from '../entities/task.entity';
+import { Agent, AgentType } from '../entities/agent.entity';
+import { GroqService } from '../config/groq.service';
+import { BlockchainService } from '../config/blockchain.service';
+import { PaymentService } from './payment.service';
+import { MCPToolService } from './mcp-tool.service';
+
+@Injectable()
+export class AgentService {
+  private readonly logger = new Logger(AgentService.name);
+
+  constructor(
+    @InjectRepository(Task)
+    private taskRepository: Repository<Task>,
+    @InjectRepository(Agent)
+    private agentRepository: Repository<Agent>,
+    private groqService: GroqService,
+    private blockchainService: BlockchainService,
+    private paymentService: PaymentService,
+    private mcpToolService: MCPToolService,
+  ) {}
+
+  async executeAgentLoop(task: Task): Promise<{
+    taskId: string;
+    result: string;
+    paymentHash: string;
+    completionTime: number;
+  }> {
+    const startTime = Date.now();
+    this.logger.log(`Executing agent loop for task ${task.id}`);
+
+    const agent = await this.agentRepository.findOne({
+      where: { id: task.agentId },
+    });
+
+    if (!agent) {
+      throw new Error(`Agent ${task.agentId} not found`);
+    }
+
+    let result = '';
+    let paymentHash = '';
+    const maxIterations = 5;
+
+    for (let iteration = 0; iteration < maxIterations; iteration++) {
+      try {
+        // PERCEIVE: Get task context
+        const prompt = this.buildPrompt(task, agent);
+
+        // DECIDE: Call Groq
+        this.logger.debug(`Groq API call - iteration ${iteration + 1}`);
+        const groqResponse = await this.groqService.chat([
+          { role: 'user', content: prompt },
+        ]);
+
+        // ACT: Parse response
+        const action = this.parseGroqResponse(groqResponse);
+
+        if (action.type === 'complete') {
+          result = action.content;
+
+          // PAY: Call MCP tool to send payment autonomously
+          paymentHash = await this.mcpToolService.callKitePayTool(
+            agent.agentId,
+            '1000000', // 1 USDC in wei (6 decimals)
+            task.id,
+          );
+
+          // REPORT: Update DB
+          task.result = result;
+          task.status = TaskStatus.COMPLETED;
+          task.completedAt = new Date();
+          await this.taskRepository.save(task);
+
+          // Update agent stats
+          agent.completedTasks++;
+          agent.lastActiveAt = new Date();
+          await this.agentRepository.save(agent);
+
+          // Record on-chain via contract
+          await this.recordOnChain(agent.agentId, task.id);
+
+          this.logger.log(`Task ${task.id} completed by agent ${agent.agentId}`);
+          break;
+        } else if (action.type === 'error') {
+          throw new Error(action.content);
+        }
+      } catch (error) {
+        this.logger.error(`Error in agent loop iteration ${iteration + 1}:`, error);
+        if (iteration === maxIterations - 1) {
+          task.status = TaskStatus.FAILED;
+          await this.taskRepository.save(task);
+          agent.failedTasks++;
+          await this.agentRepository.save(agent);
+          throw error;
+        }
+      }
+    }
+
+    const completionTime = Date.now() - startTime;
+
+    return {
+      taskId: task.id,
+      result,
+      paymentHash,
+      completionTime,
+    };
+  }
+
+  async registerAgent(
+    agentId: string,
+    agentType: AgentType,
+  ): Promise<Agent> {
+    this.logger.log(`Registering agent ${agentId}`);
+
+    const agent = this.agentRepository.create({
+      agentId,
+      agentType,
+      isActive: true,
+      lastActiveAt: new Date(),
+    });
+
+    await this.agentRepository.save(agent);
+
+    // Register on-chain
+    try {
+      const contract = this.blockchainService.getContract();
+      const tx = await contract.registerAgent(agentId);
+      await tx.wait();
+      agent.contractAddress = contract.target as string;
+      await this.agentRepository.save(agent);
+      this.logger.log(`Agent ${agentId} registered on-chain`);
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      this.logger.warn(`Failed to register agent on-chain: ${errorMsg}`);
+    }
+
+    return agent;
+  }
+
+  async getAgentReputation(agentId: string): Promise<{
+    agentId: string;
+    completedTasks: number;
+    failedTasks: number;
+    successRate: number;
+    qualityScore: number;
+    totalEarned: string;
+    lastActive: Date;
+  }> {
+    const agent = await this.agentRepository.findOne({
+      where: { agentId },
+    });
+
+    if (!agent) {
+      throw new Error(`Agent ${agentId} not found`);
+    }
+
+    // Query on-chain reputation
+    try {
+      const contract = this.blockchainService.getContract();
+      const onChainReputation = await contract.getAgentReputation(agentId);
+
+      return {
+        agentId,
+        completedTasks: agent.completedTasks,
+        failedTasks: agent.failedTasks,
+        successRate: parseFloat(agent.successRate.toString()),
+        qualityScore: parseFloat(agent.qualityScore.toString()),
+        totalEarned: onChainReputation.totalEarned.toString(),
+        lastActive: agent.lastActiveAt,
+      };
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      this.logger.warn(
+        `Failed to fetch on-chain reputation for ${agentId}: ${errorMsg}`,
+      );
+      return {
+        agentId,
+        completedTasks: agent.completedTasks,
+        failedTasks: agent.failedTasks,
+        successRate: parseFloat(agent.successRate.toString()),
+        qualityScore: parseFloat(agent.qualityScore.toString()),
+        totalEarned: '0',
+        lastActive: agent.lastActiveAt,
+      };
+    }
+  }
+
+  async getActiveAgents(): Promise<Agent[]> {
+    return this.agentRepository.find({
+      where: { isActive: true },
+      order: { lastActiveAt: 'DESC' },
+    });
+  }
+
+  private buildPrompt(task: Task, agent: Agent): string {
+    return `You are a ${agent.agentType} specialist agent in the AgentHive system.
+
+Task Type: ${task.taskType}
+Task ID: ${task.id}
+Instruction: ${task.instruction}
+
+Please execute this task and provide a clear, concise result.
+Respond with JSON in this format:
+{
+  "action": "complete",
+  "content": "your result here"
+}
+
+If you cannot complete the task, respond with:
+{
+  "action": "error",
+  "content": "reason here"
+}`;
+  }
+
+  private parseGroqResponse(response: string): {
+    type: string;
+    content: string;
+  } {
+    try {
+      const jsonMatch = response.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        const parsed = JSON.parse(jsonMatch[0]);
+        return {
+          type: parsed.action,
+          content: parsed.content,
+        };
+      }
+    } catch (error) {
+      this.logger.warn('Failed to parse Groq response as JSON');
+    }
+
+    // Fallback: treat entire response as result
+    return {
+      type: 'complete',
+      content: response,
+    };
+  }
+
+  private async recordOnChain(agentId: string, taskId: string): Promise<void> {
+    try {
+      const contract = this.blockchainService.getContract();
+      const tx = await contract.recordTaskCompletion(
+        agentId,
+        taskId,
+        '1000000', // 1 USDC
+        85, // quality score
+      );
+      await tx.wait();
+      this.logger.log(`Task ${taskId} recorded on-chain for agent ${agentId}`);
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      this.logger.error(`Failed to record on-chain: ${errorMsg}`);
+    }
+  }
+}
