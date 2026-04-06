@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { motion, useInView } from "framer-motion";
 import { mockStats } from "@/lib/mockData";
 import { containerVariants, itemVariants } from "@/lib/animations";
+import { renderIcon } from "@/lib/icons";
 
 function AnimatedCounter({
   from = 0,
@@ -73,7 +74,9 @@ export function StatsStrip() {
                 </span>
               </div>
               <p className="text-slate-400 text-sm sm:text-base flex items-center justify-center sm:justify-start gap-2">
-                <span className="text-xl">{stat.icon}</span>
+                <span className="text-cyan-400">
+                  {renderIcon(stat.iconName, 20)}
+                </span>
                 {stat.label}
               </p>
             </motion.div>

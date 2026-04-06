@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import { howItWorksSteps } from "@/lib/mockData";
 import { containerVariants, itemVariants, cardHoverVariants } from "@/lib/animations";
+import { renderIcon } from "@/lib/icons";
 
 export function HowItWorks() {
   return (
@@ -16,7 +17,7 @@ export function HowItWorks() {
           variants={containerVariants}
           className="text-center mb-16"
         >
-          <motion.h2 variants={itemVariants} className="text-3xl sm:text-4xl font-bold mb-4">
+          <motion.h2 variants={itemVariants} className="text-3xl sm:text-4xl font-bold mb-4 text-white">
             How It Works
           </motion.h2>
           <motion.p
@@ -64,8 +65,8 @@ export function HowItWorks() {
                   </div>
 
                   {/* Icon */}
-                  <div className="text-5xl mb-4 group-hover:scale-110 transition-transform duration-300">
-                    {step.icon}
+                  <div className="text-cyan-400 mb-4 group-hover:scale-110 transition-transform duration-300">
+                    {renderIcon(step.iconName, 48)}
                   </div>
 
                   {/* Title */}

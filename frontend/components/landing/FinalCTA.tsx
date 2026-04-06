@@ -31,7 +31,7 @@ export function FinalCTA() {
         className="max-w-4xl mx-auto text-center relative z-10"
       >
         {/* Headline */}
-        <motion.h2 variants={itemVariants} className="text-4xl sm:text-5xl lg:text-6xl font-bold mb-6">
+        <motion.h2 variants={itemVariants} className="text-4xl sm:text-5xl lg:text-6xl font-bold mb-6 text-white">
           <span className="block mb-2">Start Your Agent</span>
           <span className="gradient-cyan-violet-text">Economy</span>
         </motion.h2>

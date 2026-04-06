@@ -4,7 +4,7 @@ export interface Agent {
   capability: string;
   rating: number;
   price: number;
-  icon: string;
+  iconName: string;
   description: string;
 }
 
@@ -13,7 +13,7 @@ export interface Stat {
   value: string;
   prefix?: string;
   suffix?: string;
-  icon: string;
+  iconName: string;
 }
 
 export const mockAgents: Agent[] = [
@@ -23,7 +23,7 @@ export const mockAgents: Agent[] = [
     capability: "Smart Contract Development",
     rating: 4.9,
     price: 2.5,
-    icon: "⚡",
+    iconName: "Zap",
     description: "Expert in solidity optimization and security audits",
   },
   {
@@ -32,7 +32,7 @@ export const mockAgents: Agent[] = [
     capability: "On-Chain Analytics",
     rating: 4.8,
     price: 1.8,
-    icon: "📊",
+    iconName: "BarChart3",
     description: "Real-time blockchain data analysis and insights",
   },
   {
@@ -41,7 +41,7 @@ export const mockAgents: Agent[] = [
     capability: "Autonomous Trading",
     rating: 4.7,
     price: 3.2,
-    icon: "📈",
+    iconName: "TrendingUp",
     description: "High-frequency trading strategies and execution",
   },
   {
@@ -50,7 +50,7 @@ export const mockAgents: Agent[] = [
     capability: "Smart Contract Audit",
     rating: 4.95,
     price: 4.5,
-    icon: "🔒",
+    iconName: "Lock",
     description: "Professional security analysis and vulnerability detection",
   },
   {
@@ -59,7 +59,7 @@ export const mockAgents: Agent[] = [
     capability: "Market Making",
     rating: 4.6,
     price: 2.9,
-    icon: "💧",
+    iconName: "Droplets",
     description: "Automated liquidity provision across DEXs",
   },
   {
@@ -68,7 +68,7 @@ export const mockAgents: Agent[] = [
     capability: "NFT Farming",
     rating: 4.5,
     price: 2.1,
-    icon: "🎨",
+    iconName: "Palette",
     description: "Emerging NFT opportunities discovery and trading",
   },
   {
@@ -77,7 +77,7 @@ export const mockAgents: Agent[] = [
     capability: "Yield Optimization",
     rating: 4.8,
     price: 2.7,
-    icon: "🌾",
+    iconName: "Sprout",
     description: "Maximum yield farming strategies across protocols",
   },
   {
@@ -86,7 +86,7 @@ export const mockAgents: Agent[] = [
     capability: "Cross-Chain Routing",
     rating: 4.7,
     price: 3.0,
-    icon: "🌉",
+    iconName: "Link2",
     description: "Optimal cross-chain asset bridging solutions",
   },
   {
@@ -95,7 +95,7 @@ export const mockAgents: Agent[] = [
     capability: "DAO Governance",
     rating: 4.6,
     price: 1.5,
-    icon: "🗳️",
+    iconName: "Vote",
     description: "Intelligent voting and governance participation",
   },
   {
@@ -104,7 +104,7 @@ export const mockAgents: Agent[] = [
     capability: "Arbitrage Detection",
     rating: 4.9,
     price: 3.8,
-    icon: "⚖️",
+    iconName: "Scale3d",
     description: "Cross-exchange arbitrage identification and execution",
   },
   {
@@ -113,7 +113,7 @@ export const mockAgents: Agent[] = [
     capability: "Lending Protocol",
     rating: 4.7,
     price: 2.3,
-    icon: "💰",
+    iconName: "DollarSign",
     description: "Optimal lending rate detection and management",
   },
   {
@@ -122,7 +122,7 @@ export const mockAgents: Agent[] = [
     capability: "Staking Management",
     rating: 4.8,
     price: 1.9,
-    icon: "🔑",
+    iconName: "Key",
     description: "Validator selection and staking rewards optimization",
   },
 ];
@@ -131,17 +131,17 @@ export const mockStats: Stat[] = [
   {
     label: "Agent Interactions",
     value: "1.2M",
-    icon: "🤖",
+    iconName: "Bot",
   },
   {
     label: "Volume Settled",
     value: "$847M",
-    icon: "💵",
+    iconName: "DollarSign",
   },
   {
     label: "Active Agents",
     value: "5,847",
-    icon: "✨",
+    iconName: "Zap",
   },
 ];
 
@@ -150,19 +150,19 @@ export const howItWorksSteps = [
     title: "Discover",
     description:
       "Explore our network of specialized AI agents, each offering unique capabilities and verified performance metrics.",
-    icon: "🔍",
+    iconName: "Search",
   },
   {
     title: "Execute",
     description:
       "Hire agents for your specific tasks. Smart contracts ensure transparent, trustless execution with guaranteed payment.",
-    icon: "⚡",
+    iconName: "Zap",
   },
   {
     title: "Settle",
     description:
       "On-chain verification confirms completion. Payments are instant, transparent, and immutable on the blockchain.",
-    icon: "✅",
+    iconName: "CheckCircle2",
   },
 ];
 

@@ -31,7 +31,7 @@ export function Hero() {
         >
           {/* Left: Content */}
           <motion.div variants={itemVariants} className="space-y-6">
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight">
+            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-white">
               <span className="block">Autonomous AI</span>
               <span className="block gradient-cyan-violet-text">
                 Agents Hiring Each Other
@@ -69,7 +69,7 @@ export function Hero() {
           {/* Right: Visual */}
           <motion.div
             variants={slideInFromRightVariants}
-            className="hidden md:flex justify-center items-center relative h-96"
+            className="hidden md:flex justify-center items-center relative h-screen max-h-96"
           >
             <motion.div
               animate={{ y: [0, -20, 0] }}
@@ -80,20 +80,20 @@ export function Hero() {
               <motion.div
                 animate={{ rotate: 360 }}
                 transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-                className="absolute w-40 h-40 border border-cyan-500/30 rounded-2xl shadow-lg shadow-cyan-500/20"
+                className="absolute w-72 h-72 border-2 border-cyan-500/40 rounded-3xl shadow-2xl shadow-cyan-500/30"
               />
               <motion.div
                 animate={{ rotate: -360 }}
                 transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
-                className="absolute w-32 h-32 border border-violet-500/30 rounded-xl shadow-lg shadow-violet-500/20"
+                className="absolute w-56 h-56 border-2 border-violet-500/40 rounded-2xl shadow-2xl shadow-violet-500/30"
               />
-              <div className="relative w-28 h-28 rounded-2xl shadow-2xl shadow-cyan-500/50">
+              <div className="relative w-40 h-40 rounded-2xl border-2 border-cyan-400/60 shadow-2xl shadow-cyan-500/50 overflow-hidden">
                 <Image
                   src="/icon.jpg"
                   alt="AgentHive"
-                  width={112}
-                  height={112}
-                  className="w-full h-full"
+                  width={160}
+                  height={160}
+                  className="w-full h-full object-cover"
                 />
               </div>
             </motion.div>
