@@ -3,7 +3,9 @@
 import React, { useEffect, useState } from 'react';
 import { paymentApi } from '@/lib/api';
 import { useWallet } from '@/lib/wallet-context';
-import { AlertCircle, Loader, TrendingUp, DollarSign } from 'lucide-react';
+import { toast } from '@/lib/toast-service';
+import { Loader, TrendingUp, DollarSign } from 'lucide-react';
+import { PaymentRowSkeleton } from '@/components/ui/skeletons';
 
 interface Payment {
   id: string;
@@ -19,11 +21,9 @@ export default function EarningsPage() {
   const { address } = useWallet();
   const [payments, setPayments] = useState<Payment[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!address) {
-      setError('Please connect your wallet to view earnings');
       setLoading(false);
       return;
     }
@@ -33,9 +33,8 @@ export default function EarningsPage() {
         setLoading(true);
         const response = await paymentApi.getPaymentHistory(address);
         setPayments(response as Payment[]);
-        setError(null);
       } catch (err: any) {
-        setError(err.message || 'Failed to fetch payment history');
+        toast.error('Failed to fetch payment history', err.message);
       } finally {
         setLoading(false);
       }
@@ -119,23 +118,30 @@ export default function EarningsPage() {
         </div>
       </div>
 
-      {/* Error Alert */}
-      {error && (
-        <div className="flex items-start gap-4 rounded-lg border border-red-500/30 bg-red-500/10 backdrop-blur p-4">
-          <AlertCircle className="h-5 w-5 flex-shrink-0 text-red-400 mt-0.5" />
-          <div>
-            <h3 className="font-medium text-red-300">Error</h3>
-            <p className="text-sm text-red-200">{error}</p>
-          </div>
-        </div>
-      )}
+      {/* Error Alert Removed - Using toast notifications instead */}
 
       {/* Loading State */}
       {loading && (
-        <div className="flex items-center justify-center py-12">
-          <div className="text-center">
-            <Loader className="h-8 w-8 animate-spin text-cyan-400 mx-auto mb-4" />
-            <p className="text-slate-400">Loading payment history...</p>
+        <div className="rounded-lg border border-slate-800 bg-slate-900/30 backdrop-blur overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-slate-800 bg-slate-800/50">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">Agent</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">Task</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">Amount</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">Status</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">Date</th>
+                </tr>
+              </thead>
+              <tbody>
+                <PaymentRowSkeleton />
+                <PaymentRowSkeleton />
+                <PaymentRowSkeleton />
+                <PaymentRowSkeleton />
+                <PaymentRowSkeleton />
+              </tbody>
+            </table>
           </div>
         </div>
       )}

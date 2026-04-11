@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation';
 import { BarChart3, Users, TrendingUp, Plus, Home, LogOut, Wallet } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useWallet } from '@/lib/wallet-context';
+import NetworkAlert from '@/components/ui/network-alert';
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -98,7 +99,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                       {address.slice(0, 6)}...{address.slice(-4)}
                     </span>
                   </button>
-                  
+
                   {walletMenuOpen && (
                     <div className="absolute right-0 mt-2 w-48 rounded-lg bg-slate-900 border border-slate-800 shadow-lg z-50">
                       <div className="p-3 border-b border-slate-800">
@@ -135,7 +136,10 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
 
         {/* Page Content */}
         <div className="flex-1 overflow-auto p-8">
-          {children}
+          <div className="space-y-6">
+            <NetworkAlert />
+            {children}
+          </div>
         </div>
 
         {/* Mobile Bottom Navigation */}

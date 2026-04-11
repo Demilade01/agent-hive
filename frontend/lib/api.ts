@@ -65,17 +65,74 @@ export interface Payment {
 }
 
 /**
- * Helper function to handle API responses
+ * Helper function to handle API responses with better error messages
  */
 async function handleResponse<T>(response: Response): Promise<T> {
   if (!response.ok) {
-    const error = await response.json().catch(() => ({}));
+    let errorMessage = `API Error: ${response.statusText}`;
+
+    try {
+      const error = await response.json();
+      errorMessage = error.message || error.detail || errorMessage;
+    } catch {
+      // Failed to parse error response
+    }
+
+    // Provide specific error messages based on status
+    switch (response.status) {
+      case 400:
+        errorMessage = `Invalid request: ${errorMessage}`;
+        break;
+      case 401:
+        errorMessage = 'Authentication failed. Please connect your wallet.';
+        break;
+      case 403:
+        errorMessage = 'You do not have permission to access this resource.';
+        break;
+      case 404:
+        errorMessage = 'Resource not found.';
+        break;
+      case 500:
+        errorMessage = 'Server error. Please try again later.';
+        break;
+      case 503:
+        errorMessage = 'Service unavailable. Please try again later.';
+        break;
+    }
+
     throw {
-      message: error.message || `API Error: ${response.statusText}`,
+      message: errorMessage,
       status: response.status,
     } as ApiError;
   }
-  return response.json();
+
+  try {
+    return await response.json();
+  } catch {
+    throw {
+      message: 'Failed to parse response from server',
+      status: response.status,
+    } as ApiError;
+  }
+}
+
+/**
+ * Helper to wrap API calls with network error handling
+ */
+async function withNetworkError<T>(
+  fn: () => Promise<T>
+): Promise<T> {
+  try {
+    return await fn();
+  } catch (err) {
+    if (err instanceof TypeError && err.message.includes('fetch')) {
+      throw {
+        message: 'Connection failed. Please check your internet connection.',
+        status: 0,
+      } as ApiError;
+    }
+    throw err;
+  }
 }
 
 /**
@@ -130,7 +187,7 @@ export const agentApi = {
     const url = new URL(`${API_BASE_URL}/agents`);
     if (params?.type) url.searchParams.append('type', params.type);
     if (params?.active !== undefined) url.searchParams.append('active', String(params.active));
-    
+
     const response = await fetch(url.toString());
     return handleResponse<Agent[]>(response);
   },
