@@ -1,10 +1,11 @@
 'use client';
 
-import React, { ReactNode } from 'react';
+import React, { ReactNode, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { BarChart3, Users, TrendingUp, Plus, Home, LogOut } from 'lucide-react';
+import { BarChart3, Users, TrendingUp, Plus, Home, LogOut, Wallet } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useWallet } from '@/lib/wallet-context';
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -12,6 +13,8 @@ interface DashboardLayoutProps {
 
 export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const pathname = usePathname();
+  const { address, connectWallet, disconnectWallet, isConnecting } = useWallet();
+  const [walletMenuOpen, setWalletMenuOpen] = useState(false);
 
   const menuItems = [
     { href: '/dashboard', icon: Home, label: 'Overview' },
@@ -77,19 +80,57 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
       <main className="flex-1 flex flex-col overflow-hidden w-full md:flex-1">
         {/* Top Navigation */}
         <header className="border-b border-slate-800 bg-slate-900/30 backdrop-blur supports-[backdrop-filter]:bg-slate-900/10 px-8 py-6 shadow-lg">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-4">
             <div>
               <h1 className="text-2xl font-bold text-white">Dashboard</h1>
               <p className="text-sm text-slate-400 mt-1">Manage your AI agent jobs</p>
             </div>
-            <div className="text-sm text-slate-400">
-              {new Date().toLocaleDateString('en-US', {
-                weekday: 'short',
-                month: 'short',
-                day: 'numeric',
-              })}
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+              {address ? (
+                <div className="relative">
+                  <button
+                    onClick={() => setWalletMenuOpen(!walletMenuOpen)}
+                    className="flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-800/50 border border-cyan-500/30 hover:border-cyan-400 transition-colors cursor-pointer"
+                  >
+                    <Wallet className="h-4 w-4 text-cyan-400" />
+                    <span className="text-sm text-cyan-300 font-mono">
+                      {address.slice(0, 6)}...{address.slice(-4)}
+                    </span>
+                  </button>
+                  
+                  {walletMenuOpen && (
+                    <div className="absolute right-0 mt-2 w-48 rounded-lg bg-slate-900 border border-slate-800 shadow-lg z-50">
+                      <div className="p-3 border-b border-slate-800">
+                        <p className="text-xs text-slate-400 mb-1">Connected Wallet</p>
+                        <p className="text-sm text-white font-mono break-all">{address}</p>
+                      </div>
+                      <button
+                        onClick={() => {
+                          disconnectWallet();
+                          setWalletMenuOpen(false);
+                        }}
+                        className="w-full flex items-center gap-2 px-4 py-3 text-sm text-red-300 hover:bg-red-500/10 transition-colors"
+                      >
+                        <LogOut className="h-4 w-4" />
+                        Disconnect
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <button
+                  onClick={connectWallet}
+                  disabled={isConnecting}
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-cyan-500 to-violet-600 text-white text-sm font-medium hover:shadow-lg hover:shadow-cyan-500/50 transition-all disabled:opacity-50"
+                >
+                  <Wallet className="h-4 w-4" />
+                  {isConnecting ? 'Connecting...' : 'Connect Wallet'}
+                </button>
+              )}
             </div>
           </div>
+            </div>
         </header>
 
         {/* Page Content */}

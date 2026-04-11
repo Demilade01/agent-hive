@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Space_Grotesk, Playfair_Display } from 'next/font/google'
+import { WalletProvider } from "@/lib/wallet-context";
 import "./globals.css";
 
 const spaceGrotesk = Space_Grotesk({
@@ -51,7 +52,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${spaceGrotesk.variable} ${playfair.variable}`}>
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        <WalletProvider>
+          {children}
+        </WalletProvider>
+      </body>
     </html>
   );
 }
