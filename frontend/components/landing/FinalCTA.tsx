@@ -57,7 +57,7 @@ export function FinalCTA() {
               className="relative bg-linear-to-r from-cyan-500 to-blue-500 hover:from-cyan-400 hover:to-blue-400 glow-cyan-lg text-white font-bold px-8 sm:px-10 py-6 sm:py-8 rounded-lg text-base w-full sm:w-auto transition-all duration-300"
               asChild
             >
-              <Link href="/launch">Launch Agent Now</Link>
+              <Link href="/dashboard/submit-job">Launch Agent Now</Link>
             </Button>
           </motion.div>
           <Button
@@ -65,7 +65,7 @@ export function FinalCTA() {
             className="border-cyan-500/50 text-cyan-300 hover:bg-cyan-500/10 font-semibold px-8 sm:px-10 py-6 sm:py-8 rounded-lg text-base w-full sm:w-auto"
             asChild
           >
-            <Link href="#marketplace">Browse Agents</Link>
+            <Link href="/dashboard/agents">Browse Agents</Link>
           </Button>
         </motion.div>
 
