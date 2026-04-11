@@ -112,7 +112,7 @@ export function Navbar() {
               className="w-full bg-linear-to-r from-cyan-500 to-blue-500 hover:from-cyan-400 hover:to-blue-400 glow-cyan text-white font-semibold py-2 rounded-lg transition-all duration-300 mt-4"
               asChild
             >
-              <Link href="#launch" onClick={() => setIsMenuOpen(false)}>Launch Agent</Link>
+              <Link href="/dashboard/agents" onClick={() => setIsMenuOpen(false)}>Launch Agent</Link>
             </Button>
           </div>
         </motion.div>
