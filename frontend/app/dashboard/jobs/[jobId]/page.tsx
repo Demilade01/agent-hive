@@ -3,7 +3,9 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { jobApi } from '@/lib/api';
-import { AlertCircle, ArrowLeft, CheckCircle, Loader } from 'lucide-react';
+import { toast } from '@/lib/toast-service';
+import { ArrowLeft, CheckCircle, Loader } from 'lucide-react';
+import { JobDetailsSkeleton } from '@/components/ui/skeletons';
 
 interface Task {
   id: string;
@@ -31,7 +33,6 @@ export default function JobDetailsPage() {
 
   const [job, setJob] = useState<Job | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchJob = async () => {
@@ -39,9 +40,8 @@ export default function JobDetailsPage() {
         setLoading(true);
         const response = await jobApi.getJobById(jobId);
         setJob(response as Job);
-        setError(null);
       } catch (err: any) {
-        setError(err.message || 'Failed to fetch job');
+        toast.error('Failed to fetch job', err.message);
       } finally {
         setLoading(false);
       }
@@ -55,17 +55,10 @@ export default function JobDetailsPage() {
   }, [jobId]);
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <div className="text-center">
-          <Loader className="h-8 w-8 animate-spin text-cyan-400 mx-auto mb-4" />
-          <p className="text-slate-400">Loading job details...</p>
-        </div>
-      </div>
-    );
+    return <JobDetailsSkeleton />;
   }
 
-  if (error || !job) {
+  if (!job) {
     return (
       <div className="space-y-4">
         <button
@@ -75,12 +68,8 @@ export default function JobDetailsPage() {
           <ArrowLeft className="h-4 w-4" />
           Back
         </button>
-        <div className="flex items-start gap-4 rounded-lg border border-red-500/30 bg-red-500/10 backdrop-blur p-4">
-          <AlertCircle className="h-5 w-5 flex-shrink-0 text-red-400 mt-0.5" />
-          <div>
-            <h3 className="font-medium text-red-300">Error</h3>
-            <p className="text-sm text-red-200">{error || 'Job not found'}</p>
-          </div>
+        <div className="p-4 text-center">
+          <p className="text-slate-400">Job not found. Please try again.</p>
         </div>
       </div>
     );

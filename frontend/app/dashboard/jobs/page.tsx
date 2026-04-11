@@ -3,7 +3,9 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { jobApi } from '@/lib/api';
-import { AlertCircle, CheckCircle, Clock, Loader } from 'lucide-react';
+import { toast } from '@/lib/toast-service';
+import { CheckCircle, Clock, AlertCircle, Loader } from 'lucide-react';
+import { JobCardSkeleton } from '@/components/ui/skeletons';
 
 interface Job {
   id: string;
@@ -18,7 +20,6 @@ interface Job {
 export default function MyJobsPage() {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<string>('all');
 
   useEffect(() => {
@@ -27,9 +28,8 @@ export default function MyJobsPage() {
         setLoading(true);
         const response = await jobApi.getAllJobs();
         setJobs(response as Job[]);
-        setError(null);
       } catch (err: any) {
-        setError(err.message || 'Failed to fetch jobs');
+        toast.error('Failed to fetch jobs', err.message);
       } finally {
         setLoading(false);
       }
@@ -97,24 +97,14 @@ export default function MyJobsPage() {
         ))}
       </div>
 
-      {/* Error Alert */}
-      {error && (
-        <div className="flex items-start gap-4 rounded-lg border border-red-500/30 bg-red-500/10 backdrop-blur p-4">
-          <AlertCircle className="h-5 w-5 flex-shrink-0 text-red-400 mt-0.5" />
-          <div>
-            <h3 className="font-medium text-red-300">Error</h3>
-            <p className="text-sm text-red-200">{error}</p>
-          </div>
-        </div>
-      )}
+      {/* Error Alert Removed - Using toast notifications instead */}
 
       {/* Loading State */}
       {loading && (
-        <div className="flex items-center justify-center py-12">
-          <div className="text-center">
-            <Loader className="h-8 w-8 animate-spin text-cyan-400 mx-auto mb-4" />
-            <p className="text-slate-400">Loading your jobs...</p>
-          </div>
+        <div className="space-y-3">
+          <JobCardSkeleton />
+          <JobCardSkeleton />
+          <JobCardSkeleton />
         </div>
       )}
 

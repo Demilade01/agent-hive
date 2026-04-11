@@ -3,13 +3,12 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { jobApi } from '@/lib/api';
-import { AlertCircle, CheckCircle, Loader } from 'lucide-react';
+import { toast } from '@/lib/toast-service';
+import { Loader } from 'lucide-react';
 
 export default function SubmitJobPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({
     userId: '',
@@ -23,29 +22,26 @@ export default function SubmitJobPage() {
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
-    setError(null);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
-    setSuccess(null);
 
     // Validation
     if (!formData.userId.trim()) {
-      setError('User ID is required');
+      toast.error('User ID is required');
       return;
     }
     if (!formData.jobTitle.trim()) {
-      setError('Job Title is required');
+      toast.error('Job Title is required');
       return;
     }
     if (!formData.imageUrl.trim()) {
-      setError('Image URL is required');
+      toast.error('Image URL is required');
       return;
     }
     if (!formData.taskDescription.trim()) {
-      setError('Task Description is required');
+      toast.error('Task Description is required');
       return;
     }
 
@@ -53,14 +49,16 @@ export default function SubmitJobPage() {
     try {
       new URL(formData.imageUrl);
     } catch {
-      setError('Invalid image URL format');
+      toast.error('Invalid image URL format');
       return;
     }
 
     setLoading(true);
+    const loadingToastId = toast.loading('Submitting job...');
     try {
       const response = await jobApi.submitJob(formData);
-      setSuccess(`Job submitted successfully! Job ID: ${response.id}`);
+      toast.dismiss(loadingToastId);
+      toast.success(`Job submitted successfully! Job ID: ${response.id}`);
       setFormData({ userId: '', jobTitle: '', imageUrl: '', taskDescription: '' });
 
       // Redirect to job details after 2 seconds
@@ -68,7 +66,8 @@ export default function SubmitJobPage() {
         router.push(`/dashboard/jobs/${response.id}`);
       }, 2000);
     } catch (err: any) {
-      setError(err.message || 'Failed to submit job. Please try again.');
+      toast.dismiss(loadingToastId);
+      toast.error('Failed to submit job', err.message || 'Please try again.');
     } finally {
       setLoading(false);
     }
@@ -83,29 +82,7 @@ export default function SubmitJobPage() {
         </p>
       </div>
 
-      {/* Alert Messages */}
-      {error && (
-        <div className="flex items-start gap-4 rounded-lg border border-red-500/30 bg-red-500/10 backdrop-blur p-4">
-          <AlertCircle className="h-5 w-5 flex-shrink-0 text-red-400 mt-0.5" />
-          <div>
-            <h3 className="font-medium text-red-300">Error</h3>
-            <p className="text-sm text-red-200">{error}</p>
-          </div>
-        </div>
-      )}
-
-      {success && (
-        <div className="flex items-start gap-4 rounded-lg border border-green-500/30 bg-green-500/10 backdrop-blur p-4">
-          <CheckCircle className="h-5 w-5 flex-shrink-0 text-green-400 mt-0.5" />
-          <div>
-            <h3 className="font-medium text-green-300">Success</h3>
-            <p className="text-sm text-green-200">{success}</p>
-            <p className="mt-2 text-sm text-green-300">
-              Redirecting to job details...
-            </p>
-          </div>
-        </div>
-      )}
+      {/* Alert Messages Removed - Using toast notifications instead */}
 
       {/* Form */}
       <form onSubmit={handleSubmit} className="space-y-6">
@@ -188,7 +165,7 @@ export default function SubmitJobPage() {
         {/* Submit Button */}
         <button
           type="submit"
-          disabled={loading || !!success}
+          disabled={loading}
           className="w-full rounded-lg bg-gradient-to-r from-cyan-500 to-violet-600 px-6 py-3 font-medium text-white transition-all hover:shadow-lg hover:shadow-cyan-500/50 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 glow-cyan-lg"
         >
           {loading ? (
