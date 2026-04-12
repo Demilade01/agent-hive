@@ -77,6 +77,17 @@ export class PaymentService {
     });
   }
 
+  /**
+   * Get payment history for a user (by userId, not agentId)
+   */
+  async getPaymentHistoryByUserId(userId: string): Promise<Payment[]> {
+    return this.paymentRepository.find({
+      where: { userId },
+      relations: ['task', 'agent'],
+      order: { createdAt: 'DESC' },
+    });
+  }
+
   async getPaymentById(paymentId: string): Promise<Payment | null> {
     return this.paymentRepository.findOne({
       where: { id: paymentId },

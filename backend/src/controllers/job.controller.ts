@@ -215,6 +215,31 @@ export class JobController {
     }
   }
 
+  @Get('payments/user/:userId')
+  @ApiOperation({
+    summary: 'Get user payment history',
+    description: 'Retrieve all payments received by a specific user',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Payment history for user',
+    isArray: true,
+  })
+  async getPaymentHistoryByUser(@Param('userId') userId: string) {
+    try {
+      const payments = await this.paymentService.getPaymentHistoryByUserId(userId);
+      return payments;
+    } catch (error) {
+      this.logger.error(
+        `Failed to fetch payments for user ${userId}: ${error instanceof Error ? error.message : String(error)}`,
+      );
+      throw new HttpException(
+        'Failed to fetch payments',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
   @Post('agents')
   @ApiOperation({
     summary: 'Register a new agent',
