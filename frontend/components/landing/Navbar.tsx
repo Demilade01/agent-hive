@@ -76,7 +76,7 @@ export function Navbar() {
             className="hidden sm:flex bg-linear-to-r from-cyan-500 to-blue-500 hover:from-cyan-400 hover:to-blue-400 glow-cyan text-white font-semibold px-6 py-2 rounded-lg transition-all duration-300"
             asChild
           >
-            <Link href="#launch">Launch Agent</Link>
+            <Link href="/dashboard/agents">Launch Agent</Link>
           </Button>
 
           {/* Mobile Menu Button */}
