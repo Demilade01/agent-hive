@@ -18,12 +18,12 @@ interface Payment {
 }
 
 export default function EarningsPage() {
-  const { address } = useWallet();
+  const { address, userId } = useWallet();
   const [payments, setPayments] = useState<Payment[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!address) {
+    if (!userId) {
       setLoading(false);
       return;
     }
@@ -31,7 +31,7 @@ export default function EarningsPage() {
     const fetchPayments = async () => {
       try {
         setLoading(true);
-        const response = await paymentApi.getPaymentHistory(address);
+        const response = await paymentApi.getPaymentHistory(userId);
         setPayments(response as Payment[]);
       } catch (err: any) {
         toast.error('Failed to fetch payment history', err.message);
@@ -41,7 +41,7 @@ export default function EarningsPage() {
     };
 
     fetchPayments();
-  }, [address]);
+  }, [userId]);
 
   // Calculate stats
   const totalEarnings = payments
