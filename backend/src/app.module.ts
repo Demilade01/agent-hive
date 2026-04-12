@@ -16,6 +16,9 @@ import { Job } from './entities/job.entity';
 import { Task } from './entities/task.entity';
 import { Agent } from './entities/agent.entity';
 import { Payment } from './entities/payment.entity';
+import { User } from './entities/user.entity';
+import { UserService } from './services/user.service';
+import { AuthController } from './controllers/auth.controller';
 
 @Module({
   imports: [
@@ -24,10 +27,10 @@ import { Payment } from './entities/payment.entity';
       envFilePath: '.env',
     }),
     DatabaseModule,
-    TypeOrmModule.forFeature([Job, Task, Agent, Payment]),
+    TypeOrmModule.forFeature([Job, Task, Agent, Payment, User]),
     EventEmitterModule.forRoot(),
   ],
-  controllers: [AppController, JobController],
+  controllers: [AppController, JobController, AuthController],
   providers: [
     AppService,
     OrchestratorService,
@@ -36,6 +39,7 @@ import { Payment } from './entities/payment.entity';
     MCPToolService,
     BlockchainService,
     GroqService,
+    UserService,
   ],
 })
 export class AppModule {}

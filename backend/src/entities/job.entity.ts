@@ -2,9 +2,12 @@ import {
   Entity,
   Column,
   OneToMany,
+  ManyToOne,
+  JoinColumn,
 } from 'typeorm';
 import { Base } from '../database/base.entity';
 import { Task } from './task.entity';
+import { User } from './user.entity';
 
 export enum JobStatus {
   PENDING = 'pending',
@@ -32,4 +35,8 @@ export class Job extends Base {
 
   @OneToMany(() => Task, (task) => task.job, { cascade: true })
   tasks!: Task[];
+
+  @ManyToOne(() => User, (user) => user.jobs, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'userId' })
+  user!: User;
 }
