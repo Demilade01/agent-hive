@@ -16,6 +16,7 @@ declare global {
 
 interface WalletContextType {
   address: string | null;
+  userId: string | null;
   isConnecting: boolean;
   error: string | null;
   connectWallet: () => Promise<void>;
@@ -30,12 +31,35 @@ const WalletContext = createContext<WalletContextType | undefined>(undefined);
 
 export function WalletProvider({ children }: { children: React.ReactNode }) {
   const [address, setAddress] = useState<string | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
   const [isConnecting, setIsConnecting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [provider, setProvider] = useState<ethers.BrowserProvider | null>(null);
   const [chainId, setChainId] = useState<number | null>(null);
 
   const KITE_TESTNET_CHAIN_ID = 2368;
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api';
+
+  // Register user with backend and get userId
+  const registerUser = async (walletAddress: string) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/auth/register-or-login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ walletAddress }),
+      });
+
+      if (!response.ok) throw new Error('Failed to register user');
+
+      const data = await response.json();
+      setUserId(data.id);
+      localStorage.setItem('user_id', data.id);
+      return data.id;
+    } catch (err) {
+      console.error('Failed to register user:', err);
+      throw err;
+    }
+  };
 
   // Get current chain ID
   const getChainId = async (provider: ethers.BrowserProvider) => {
@@ -105,10 +129,14 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
       });
 
       if (accounts.length > 0) {
-        setAddress(accounts[0]);
+        const walletAddress = accounts[0];
+        setAddress(walletAddress);
         setProvider(provider);
-        localStorage.setItem('wallet_address', accounts[0]);
+        localStorage.setItem('wallet_address', walletAddress);
         await getChainId(provider);
+
+        // Register user with backend and get userId
+        await registerUser(walletAddress);
       }
     } catch (err: any) {
       setError(err.message || 'Failed to connect wallet');
@@ -120,9 +148,11 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
 
   const disconnectWallet = () => {
     setAddress(null);
+    setUserId(null);
     setProvider(null);
     setChainId(null);
     localStorage.removeItem('wallet_address');
+    localStorage.removeItem('user_id');
   };
 
   const switchNetwork = async () => {
@@ -163,7 +193,7 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <WalletContext.Provider
-      value={{ address, isConnecting, error, connectWallet, disconnectWallet, provider, chainId, isWrongNetwork, switchNetwork }}
+      value={{ address, userId, isConnecting, error, connectWallet, disconnectWallet, provider, chainId, isWrongNetwork, switchNetwork }}
     >
       {children}
     </WalletContext.Provider>

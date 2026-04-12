@@ -221,9 +221,17 @@ export const agentApi = {
  */
 export const paymentApi = {
   /**
-   * Get payment history for an agent
+   * Get payment history for a user (by userId)
    */
-  getPaymentHistory: async (agentId: string): Promise<Payment[]> => {
+  getPaymentHistory: async (userId: string): Promise<Payment[]> => {
+    const response = await fetch(`${API_BASE_URL}/payments/user/${userId}`);
+    return handleResponse<Payment[]>(response);
+  },
+
+  /**
+   * Get payment history for an agent (legacy - for backwards compatibility)
+   */
+  getPaymentHistoryByAgent: async (agentId: string): Promise<Payment[]> => {
     const response = await fetch(`${API_BASE_URL}/payments/${agentId}`);
     return handleResponse<Payment[]>(response);
   },
