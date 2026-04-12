@@ -49,7 +49,10 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
         body: JSON.stringify({ walletAddress }),
       });
 
-      if (!response.ok) throw new Error('Failed to register user');
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(`Failed to register user: ${response.status} ${JSON.stringify(errorData)}`);
+      }
 
       const data = await response.json();
       setUserId(data.id);
