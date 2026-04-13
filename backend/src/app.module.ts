@@ -19,6 +19,7 @@ import { Payment } from './entities/payment.entity';
 import { User } from './entities/user.entity';
 import { UserService } from './services/user.service';
 import { AuthController } from './controllers/auth.controller';
+import { SeedService } from './services/seed.service';
 
 @Module({
   imports: [
@@ -40,6 +41,7 @@ import { AuthController } from './controllers/auth.controller';
     BlockchainService,
     GroqService,
     UserService,
+    SeedService,
   ],
 })
 export class AppModule {}
