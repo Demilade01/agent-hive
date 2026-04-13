@@ -317,10 +317,13 @@ If you cannot complete the task, respond with:
 
   private async recordOnChain(agentId: string, taskId: string): Promise<void> {
     try {
+      const { ethers } = await import('ethers');
       const contract = this.blockchainService.getContract();
+      // Convert UUID strings to bytes32 hashes for the smart contract
+      const taskIdHash = ethers.id(taskId);
       const tx = await contract.recordTaskCompletion(
         agentId,
-        taskId,
+        taskIdHash,
         '1000000', // 1 USDC
         85, // quality score
       );
