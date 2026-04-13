@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { OnEvent } from '@nestjs/event-emitter';
+import { EventEmitter2, OnEvent } from '@nestjs/event-emitter';
 import { Task, TaskStatus } from '../entities/task.entity';
 import { Agent, AgentType } from '../entities/agent.entity';
 import { Job, JobStatus } from '../entities/job.entity';
@@ -23,6 +23,7 @@ export class AgentService {
     private groqService: GroqService,
     private blockchainService: BlockchainService,
     private mcpToolService: MCPToolService,
+    private eventEmitter: EventEmitter2,
   ) {}
 
   @OnEvent('task.assigned')
@@ -101,6 +102,10 @@ export class AgentService {
           await this.recordOnChain(agent.agentId, task.id);
 
           this.logger.log(`Task ${task.id} completed by agent ${agent.agentId}`);
+          
+          // Emit event to trigger next task assignment
+          this.eventEmitter.emit('task.completed', { taskId: task.id, jobId: task.jobId });
+          
           break;
         } else if (action.type === 'error') {
           throw new Error(action.content);
