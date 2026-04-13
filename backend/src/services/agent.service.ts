@@ -5,9 +5,11 @@ import { EventEmitter2, OnEvent } from '@nestjs/event-emitter';
 import { Task, TaskStatus } from '../entities/task.entity';
 import { Agent, AgentType } from '../entities/agent.entity';
 import { Job, JobStatus } from '../entities/job.entity';
+import { Payment, PaymentStatus } from '../entities/payment.entity';
 import { GroqService } from '../config/groq.service';
 import { BlockchainService } from '../config/blockchain.service';
 import { MCPToolService } from './mcp-tool.service';
+import { PaymentService } from './payment.service';
 
 @Injectable()
 export class AgentService {
@@ -20,9 +22,12 @@ export class AgentService {
     private agentRepository: Repository<Agent>,
     @InjectRepository(Job)
     private jobRepository: Repository<Job>,
+    @InjectRepository(Payment)
+    private paymentRepository: Repository<Payment>,
     private groqService: GroqService,
     private blockchainService: BlockchainService,
     private mcpToolService: MCPToolService,
+    private paymentService: PaymentService,
     private eventEmitter: EventEmitter2,
   ) {}
 
@@ -130,6 +135,21 @@ export class AgentService {
           task.status = TaskStatus.COMPLETED;
           task.completedAt = new Date();
           await this.taskRepository.save(task);
+
+          // Record payment with user association
+          const jobForPayment = await this.jobRepository.findOne({
+            where: { id: task.jobId },
+          });
+          const payment = this.paymentRepository.create({
+            agentId: agent.id,
+            taskId: task.id,
+            userId: jobForPayment?.userId,
+            amount: '1000000', // 1 USDC in wei
+            status: PaymentStatus.COMPLETED,
+            kiteTransactionHash: paymentHash,
+          });
+          await this.paymentRepository.save(payment);
+          this.logger.log(`Payment recorded: ${payment.id}, txHash=${paymentHash}`);
 
           // Update agent stats
           agent.completedTasks++;
