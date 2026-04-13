@@ -2,16 +2,17 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useWallet } from '@/lib/wallet-context';
 import { jobApi } from '@/lib/api';
 import { toast } from '@/lib/toast-service';
 import { Loader } from 'lucide-react';
 
 export default function SubmitJobPage() {
   const router = useRouter();
+  const { userId } = useWallet();
   const [loading, setLoading] = useState(false);
 
   const [formData, setFormData] = useState({
-    userId: '',
     jobTitle: '',
     imageUrl: '',
     taskDescription: '',
@@ -28,8 +29,8 @@ export default function SubmitJobPage() {
     e.preventDefault();
 
     // Validation
-    if (!formData.userId.trim()) {
-      toast.error('User ID is required');
+    if (!userId) {
+      toast.error('Please connect your wallet first');
       return;
     }
     if (!formData.jobTitle.trim()) {
@@ -56,14 +57,17 @@ export default function SubmitJobPage() {
     setLoading(true);
     const loadingToastId = toast.loading('Submitting job...');
     try {
-      const response = await jobApi.submitJob(formData);
+      const response = await jobApi.submitJob({
+        userId,
+        ...formData,
+      });
       toast.dismiss(loadingToastId);
-      toast.success(`Job submitted successfully! Job ID: ${response.id}`);
-      setFormData({ userId: '', jobTitle: '', imageUrl: '', taskDescription: '' });
+      toast.success(`Job submitted successfully! Job ID: ${response.jobId}`);
+      setFormData({ jobTitle: '', imageUrl: '', taskDescription: '' });
 
       // Redirect to job details after 2 seconds
       setTimeout(() => {
-        router.push(`/dashboard/jobs/${response.id}`);
+        router.push(`/dashboard/jobs/${response.jobId}`);
       }, 2000);
     } catch (err: any) {
       toast.dismiss(loadingToastId);
@@ -87,23 +91,6 @@ export default function SubmitJobPage() {
       {/* Form */}
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="rounded-lg border border-slate-800 bg-slate-900/50 backdrop-blur p-6 shadow-xl space-y-6">
-          {/* User ID */}
-          <div className="space-y-2">
-            <label htmlFor="userId" className="block text-sm font-medium text-white">
-              User ID
-            </label>
-            <input
-              type="text"
-              id="userId"
-              name="userId"
-              value={formData.userId}
-              onChange={handleInputChange}
-              placeholder="Your unique identifier (e.g., user-123)"
-              className="w-full rounded-lg border border-slate-700 bg-slate-800/50 px-4 py-2 text-white placeholder-slate-500 focus:border-cyan-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/20"
-              disabled={loading}
-            />
-          </div>
-
           {/* Job Title */}
           <div className="space-y-2">
             <label htmlFor="jobTitle" className="block text-sm font-medium text-white">

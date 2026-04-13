@@ -23,6 +23,12 @@ export interface Job {
   updatedAt: string;
 }
 
+export interface JobSubmitResponse {
+  jobId: string;
+  status: 'pending' | 'in_progress' | 'completed' | 'failed';
+  createdAt: string;
+}
+
 export interface Task {
   id: string;
   jobId: string;
@@ -147,13 +153,13 @@ export const jobApi = {
     jobTitle: string;
     imageUrl: string;
     taskDescription: string;
-  }): Promise<Job> => {
+  }): Promise<JobSubmitResponse> => {
     const response = await fetch(`${API_BASE_URL}/jobs`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
     });
-    return handleResponse<Job>(response);
+    return handleResponse<JobSubmitResponse>(response);
   },
 
   /**

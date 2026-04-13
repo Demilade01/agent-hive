@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In } from 'typeorm';
-import { EventEmitter2 } from '@nestjs/event-emitter';
+import { EventEmitter2, OnEvent } from '@nestjs/event-emitter';
 import { Job, JobStatus } from '../entities/job.entity';
 import { Task, TaskType, TaskStatus } from '../entities/task.entity';
 import { Agent, AgentType } from '../entities/agent.entity';
@@ -80,6 +80,14 @@ export class OrchestratorService {
       status: JobStatus.PENDING,
       createdAt: job.createdAt,
     };
+  }
+
+  @OnEvent('job.submitted')
+  async handleJobSubmitted(payload: { jobId: string }): Promise<void> {
+    this.logger.log(`Job submitted event received for job ${payload.jobId}`);
+    // Wait a moment to ensure tasks are persisted
+    await new Promise(resolve => setTimeout(resolve, 100));
+    await this.assignTasksToAgents();
   }
 
   async assignTasksToAgents(): Promise<void> {
