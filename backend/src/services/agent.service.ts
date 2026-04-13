@@ -30,7 +30,32 @@ export class AgentService {
   async handleTaskAssigned(payload: { task: Task; agent: Agent }): Promise<void> {
     this.logger.log(`Task assigned event received for task ${payload.task.id}`);
     try {
-      await this.executeAgentLoop(payload.task);
+      // Fetch the job to get all tasks
+      const job = await this.jobRepository.findOne({
+        where: { id: payload.task.jobId },
+        relations: ['tasks'],
+      });
+
+      if (!job) {
+        throw new Error(`Job ${payload.task.jobId} not found`);
+      }
+
+      // Sort tasks by creation order
+      const sortedTasks = job.tasks.sort(
+        (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+      );
+      const taskIndex = sortedTasks.findIndex(t => t.id === payload.task.id);
+
+      // Get previous task's result if it exists and is completed
+      let previousResult: string | undefined;
+      if (taskIndex > 0) {
+        const previousTask = sortedTasks[taskIndex - 1];
+        if (previousTask.status === TaskStatus.COMPLETED && previousTask.result) {
+          previousResult = previousTask.result;
+        }
+      }
+
+      await this.executeAgentLoop(payload.task, previousResult);
     } catch (error) {
       this.logger.error(`Failed to execute task ${payload.task.id}: ${error}`);
       // Update task status to failed
@@ -102,10 +127,10 @@ export class AgentService {
           await this.recordOnChain(agent.agentId, task.id);
 
           this.logger.log(`Task ${task.id} completed by agent ${agent.agentId}`);
-          
+
           // Emit event to trigger next task assignment
           this.eventEmitter.emit('task.completed', { taskId: task.id, jobId: task.jobId });
-          
+
           break;
         } else if (action.type === 'error') {
           throw new Error(action.content);
