@@ -188,7 +188,7 @@ export class OrchestratorService {
 
     // Check if all tasks are completed
     const allTasksCompleted = job.tasks.every(t => t.status === TaskStatus.COMPLETED);
-    
+
     if (allTasksCompleted && job.status !== JobStatus.COMPLETED) {
       job.status = JobStatus.COMPLETED;
       await this.jobRepository.save(job);

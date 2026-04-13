@@ -156,7 +156,34 @@ export class JobController {
         filtered = filtered.filter((a) => a.isActive === active);
       }
 
-      return filtered;
+      // Enrich agents with their on-chain reputation stats
+      const enrichedAgents = await Promise.all(
+        filtered.map(async (agent) => {
+          try {
+            const stats = await this.agentService.getAgentReputation(agent.agentId);
+            return {
+              ...agent,
+              stats,
+            };
+          } catch (error) {
+            // If on-chain lookup fails, return agent with local stats
+            return {
+              ...agent,
+              stats: {
+                agentId: agent.agentId,
+                completedTasks: agent.completedTasks,
+                failedTasks: agent.failedTasks,
+                successRate: typeof agent.successRate === 'number' ? agent.successRate : 0,
+                qualityScore: typeof agent.qualityScore === 'number' ? agent.qualityScore : 0,
+                totalEarned: '0',
+                lastActive: agent.lastActiveAt,
+              },
+            };
+          }
+        })
+      );
+
+      return enrichedAgents;
     } catch (error) {
       this.logger.error(`Failed to fetch agents: ${error instanceof Error ? error.message : String(error)}`);
       throw new HttpException(
