@@ -30,32 +30,45 @@ export class AgentService {
   async handleTaskAssigned(payload: { task: Task; agent: Agent }): Promise<void> {
     this.logger.log(`Task assigned event received for task ${payload.task.id}`);
     try {
+      // Refresh task from database to ensure we have latest data
+      const freshTask = await this.taskRepository.findOne({
+        where: { id: payload.task.id },
+      });
+
+      if (!freshTask) {
+        throw new Error(`Task ${payload.task.id} not found`);
+      }
+
       // Fetch the job to get all tasks
       const job = await this.jobRepository.findOne({
-        where: { id: payload.task.jobId },
+        where: { id: freshTask.jobId },
         relations: ['tasks'],
       });
 
       if (!job) {
-        throw new Error(`Job ${payload.task.jobId} not found`);
+        throw new Error(`Job ${freshTask.jobId} not found`);
       }
 
       // Sort tasks by creation order
       const sortedTasks = job.tasks.sort(
         (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
       );
-      const taskIndex = sortedTasks.findIndex(t => t.id === payload.task.id);
+      const taskIndex = sortedTasks.findIndex(t => t.id === freshTask.id);
+
+      this.logger.debug(`Task index: ${taskIndex}, looking for previous result...`);
 
       // Get previous task's result if it exists and is completed
       let previousResult: string | undefined;
       if (taskIndex > 0) {
         const previousTask = sortedTasks[taskIndex - 1];
+        this.logger.debug(`Previous task status: ${previousTask.status}, has result: ${!!previousTask.result}`);
         if (previousTask.status === TaskStatus.COMPLETED && previousTask.result) {
           previousResult = previousTask.result;
+          this.logger.debug(`Found previous result, length: ${previousResult.length}`);
         }
       }
 
-      await this.executeAgentLoop(payload.task, previousResult);
+      await this.executeAgentLoop(freshTask, previousResult);
     } catch (error) {
       this.logger.error(`Failed to execute task ${payload.task.id}: ${error}`);
       // Update task status to failed
