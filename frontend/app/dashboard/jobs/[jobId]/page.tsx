@@ -197,15 +197,9 @@ export default function JobDetailsPage() {
 
       {/* Metadata */}
       <div className="rounded-lg border border-slate-800 bg-slate-900/30 backdrop-blur p-4 text-sm">
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <p className="text-slate-400">Submitted</p>
-            <p className="text-white mt-1">{new Date(job.createdAt).toLocaleString()}</p>
-          </div>
-          <div>
-            <p className="text-slate-400">User ID</p>
-            <p className="text-white mt-1">{job.userId}</p>
-          </div>
+        <div>
+          <p className="text-slate-400">Submitted</p>
+          <p className="text-white mt-1">{new Date(job.createdAt).toLocaleString()}</p>
         </div>
       </div>
     </div>
