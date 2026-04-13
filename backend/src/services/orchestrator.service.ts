@@ -109,11 +109,24 @@ export class OrchestratorService {
       relations: ['job'],
     });
 
+    // Group by jobId to process one task per job per call
+    const jobTaskMap = new Map<string, Task[]>();
     for (const task of pendingTasks) {
-      // Check if this task's prerequisites are met
-      // Tasks must run in order: IMAGE_ANALYZER -> CONTEXT_FETCHER -> INSIGHT_WRITER
+      if (!jobTaskMap.has(task.jobId)) {
+        jobTaskMap.set(task.jobId, []);
+      }
+      jobTaskMap.get(task.jobId)!.push(task);
+    }
+
+    // For each job, assign only ONE pending task
+    for (const [jobId, jobPendingTasks] of jobTaskMap) {
+      // Sort pending tasks by creation date to process in order
+      jobPendingTasks.sort(
+        (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+      );
+
       const job = await this.jobRepository.findOne({
-        where: { id: task.jobId },
+        where: { id: jobId },
         relations: ['tasks'],
       });
 
@@ -123,32 +136,42 @@ export class OrchestratorService {
       const jobTasks = job.tasks.sort(
         (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
       );
-      const taskIndex = jobTasks.findIndex(t => t.id === task.id);
 
-      // Only assign if this is the first task OR previous task is completed
-      if (taskIndex > 0) {
-        const previousTask = jobTasks[taskIndex - 1];
-        if (previousTask.status !== TaskStatus.COMPLETED) {
-          this.logger.debug(`Task ${task.id} waiting for prerequisite task ${previousTask.id}`);
-          continue;
+      // Find first pending task that meets prerequisites
+      let assignedThisJob = false;
+      for (const task of jobPendingTasks) {
+        if (assignedThisJob) break; // Only assign one task per job per call
+
+        const taskIndex = jobTasks.findIndex(t => t.id === task.id);
+
+        // Only assign if this is the first task OR previous task is completed
+        if (taskIndex > 0) {
+          const previousTask = jobTasks[taskIndex - 1];
+          if (previousTask.status !== TaskStatus.COMPLETED) {
+            this.logger.debug(
+              `Task ${task.id} (${task.taskType}) waiting: previous task ${previousTask.id} is ${previousTask.status}`
+            );
+            continue;
+          }
         }
-      }
 
-      // Find available agent with matching type
-      const agent = await this.agentRepository.findOne({
-        where: {
-          agentType: task.taskType as unknown as AgentType,
-          isActive: true,
-        },
-      });
+        // Find available agent with matching type
+        const agent = await this.agentRepository.findOne({
+          where: {
+            agentType: task.taskType as unknown as AgentType,
+            isActive: true,
+          },
+        });
 
-      if (agent) {
-        task.agentId = agent.id;
-        task.status = TaskStatus.ASSIGNED;
-        await this.taskRepository.save(task);
+        if (agent) {
+          task.agentId = agent.id;
+          task.status = TaskStatus.ASSIGNED;
+          await this.taskRepository.save(task);
 
-        this.logger.log(`Task ${task.id} assigned to agent ${agent.agentId}`);
-        this.eventEmitter.emit('task.assigned', { task, agent });
+          this.logger.log(`Task ${task.id} (${task.taskType}) assigned to agent ${agent.agentId}`);
+          this.eventEmitter.emit('task.assigned', { task, agent });
+          assignedThisJob = true; // Mark that we assigned a task for this job this call
+        }
       }
     }
   }
