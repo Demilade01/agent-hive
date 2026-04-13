@@ -97,6 +97,8 @@ export class OrchestratorService {
     await new Promise(resolve => setTimeout(resolve, 500));
     // Try to assign the next task in the sequence
     await this.assignTasksToAgents();
+    // Check if all tasks for this job are completed
+    await this.checkAndUpdateJobCompletion(payload.jobId);
   }
 
   async assignTasksToAgents(): Promise<void> {
@@ -173,6 +175,25 @@ export class OrchestratorService {
           assignedThisJob = true; // Mark that we assigned a task for this job this call
         }
       }
+    }
+  }
+
+  private async checkAndUpdateJobCompletion(jobId: string): Promise<void> {
+    const job = await this.jobRepository.findOne({
+      where: { id: jobId },
+      relations: ['tasks'],
+    });
+
+    if (!job) return;
+
+    // Check if all tasks are completed
+    const allTasksCompleted = job.tasks.every(t => t.status === TaskStatus.COMPLETED);
+    
+    if (allTasksCompleted && job.status !== JobStatus.COMPLETED) {
+      job.status = JobStatus.COMPLETED;
+      await this.jobRepository.save(job);
+      this.logger.log(`Job ${jobId} completed! All ${job.tasks.length} tasks finished successfully.`);
+      this.eventEmitter.emit('job.completed', { jobId });
     }
   }
 
