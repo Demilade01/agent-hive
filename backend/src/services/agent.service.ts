@@ -25,6 +25,19 @@ export class AgentService {
     private mcpToolService: MCPToolService,
   ) {}
 
+  @OnEvent('task.assigned')
+  async handleTaskAssigned(payload: { task: Task; agent: Agent }): Promise<void> {
+    this.logger.log(`Task assigned event received for task ${payload.task.id}`);
+    try {
+      await this.executeAgentLoop(payload.task);
+    } catch (error) {
+      this.logger.error(`Failed to execute task ${payload.task.id}: ${error}`);
+      // Update task status to failed
+      payload.task.status = TaskStatus.FAILED;
+      await this.taskRepository.save(payload.task);
+    }
+  }
+
   async executeAgentLoop(
     task: Task,
     previousResult?: string,
