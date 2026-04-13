@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Agent, AgentType } from '../entities/agent.entity';
+import { AgentService } from './agent.service';
 
 @Injectable()
 export class SeedService {
@@ -10,6 +11,7 @@ export class SeedService {
   constructor(
     @InjectRepository(Agent)
     private agentRepository: Repository<Agent>,
+    private agentService: AgentService,
   ) {}
 
   async seedAgents(): Promise<void> {
@@ -36,17 +38,14 @@ export class SeedService {
       });
 
       if (!exists) {
-        const agent = this.agentRepository.create({
-          ...agentData,
-          isActive: true,
-          completedTasks: 0,
-          failedTasks: 0,
-          successRate: 100,
-          qualityScore: 100,
-          lastActiveAt: new Date(),
-        });
-        await this.agentRepository.save(agent);
-        this.logger.log(`Created agent: ${agentData.agentId}`);
+        try {
+          // Use AgentService.registerAgent() to register both locally and on-chain
+          const agent = await this.agentService.registerAgent(agentData.agentId, agentData.agentType);
+          this.logger.log(`Created and registered agent on-chain: ${agentData.agentId}`);
+        } catch (error) {
+          const errorMsg = error instanceof Error ? error.message : String(error);
+          this.logger.error(`Failed to register agent ${agentData.agentId}: ${errorMsg}`);
+        }
       } else {
         this.logger.log(`Agent ${agentData.agentType} already exists`);
       }
@@ -56,6 +55,11 @@ export class SeedService {
   }
 
   async onModuleInit(): Promise<void> {
-    await this.seedAgents();
+    try {
+      await this.seedAgents();
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      this.logger.error(`Failed to seed agents: ${errorMsg}`);
+    }
   }
 }
