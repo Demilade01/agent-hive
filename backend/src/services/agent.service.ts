@@ -128,8 +128,12 @@ export class AgentService {
 
           this.logger.log(`Task ${task.id} completed by agent ${agent.agentId}`);
 
-          // Emit event to trigger next task assignment
-          this.eventEmitter.emit('task.completed', { taskId: task.id, jobId: task.jobId });
+          // Emit event to trigger next task assignment with result data
+          this.eventEmitter.emit('task.completed', {
+            taskId: task.id,
+            jobId: task.jobId,
+            result: result,
+          });
 
           break;
         } else if (action.type === 'error') {

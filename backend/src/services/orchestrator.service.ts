@@ -91,8 +91,10 @@ export class OrchestratorService {
   }
 
   @OnEvent('task.completed')
-  async handleTaskCompleted(payload: { taskId: string; jobId: string }): Promise<void> {
+  async handleTaskCompleted(payload: { taskId: string; jobId: string; result?: string }): Promise<void> {
     this.logger.log(`Task completed event received for task ${payload.taskId}`);
+    // Wait a moment to ensure task result is persisted to database
+    await new Promise(resolve => setTimeout(resolve, 200));
     // Try to assign the next task in the sequence
     await this.assignTasksToAgents();
   }
