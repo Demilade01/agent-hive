@@ -85,7 +85,7 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
             setAddress(accounts[0].address);
             setProvider(provider);
             await getChainId(provider);
-            
+
             // Load userId from localStorage if available
             const storedUserId = localStorage.getItem('user_id');
             if (storedUserId) {
