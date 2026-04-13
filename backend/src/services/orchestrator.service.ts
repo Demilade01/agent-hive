@@ -90,6 +90,13 @@ export class OrchestratorService {
     await this.assignTasksToAgents();
   }
 
+  @OnEvent('task.completed')
+  async handleTaskCompleted(payload: { taskId: string; jobId: string }): Promise<void> {
+    this.logger.log(`Task completed event received for task ${payload.taskId}`);
+    // Try to assign the next task in the sequence
+    await this.assignTasksToAgents();
+  }
+
   async assignTasksToAgents(): Promise<void> {
     this.logger.debug('Assigning pending tasks to agents...');
 
@@ -101,6 +108,30 @@ export class OrchestratorService {
     });
 
     for (const task of pendingTasks) {
+      // Check if this task's prerequisites are met
+      // Tasks must run in order: IMAGE_ANALYZER -> CONTEXT_FETCHER -> INSIGHT_WRITER
+      const job = await this.jobRepository.findOne({
+        where: { id: task.jobId },
+        relations: ['tasks'],
+      });
+
+      if (!job) continue;
+
+      // Get all tasks for this job, sorted by creation
+      const jobTasks = job.tasks.sort(
+        (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+      );
+      const taskIndex = jobTasks.findIndex(t => t.id === task.id);
+
+      // Only assign if this is the first task OR previous task is completed
+      if (taskIndex > 0) {
+        const previousTask = jobTasks[taskIndex - 1];
+        if (previousTask.status !== TaskStatus.COMPLETED) {
+          this.logger.debug(`Task ${task.id} waiting for prerequisite task ${previousTask.id}`);
+          continue;
+        }
+      }
+
       // Find available agent with matching type
       const agent = await this.agentRepository.findOne({
         where: {
